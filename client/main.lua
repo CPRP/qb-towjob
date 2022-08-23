@@ -93,21 +93,21 @@ local function CreateZone(type, number)
 
     if type == "main" then
         event = "qb-tow:client:PaySlip"
-        label = "Payslip"
+        label = Lang:t("label.payslip")
         coords = vector3(Config.Locations[type].coords.x, Config.Locations[type].coords.y, Config.Locations[type].coords.z)
         heading = Config.Locations[type].coords.h
         boxName = Config.Locations[type].label
         size = 3
     elseif type == "vehicle" then
         event = "qb-tow:client:Vehicle"
-        label = "Vehicle"
+        label = Lang:t("label.vehicle")
         coords = vector3(Config.Locations[type].coords.x, Config.Locations[type].coords.y, Config.Locations[type].coords.z)
         heading = Config.Locations[type].coords.h
         boxName = Config.Locations[type].label
         size = 5
     elseif type == "towspots" then
         event = "qb-tow:client:SpawnNPCVehicle"
-        label = "NPCZone"
+        label = Lang:t("label.npcz")
         coords = vector3(Config.Locations[type][number].coords.x, Config.Locations[type][number].coords.y, Config.Locations[type][number].coords.z)
         heading = Config.Locations[type][number].coords.h
         boxName = Config.Locations[type][number].name
@@ -228,7 +228,8 @@ end
 RegisterNetEvent('qb-tow:client:SpawnVehicle', function()
     local vehicleInfo = selectedVeh
     local coords = Config.Locations["vehicle"].coords
-    QBCore.Functions.SpawnVehicle(vehicleInfo, function(veh)
+    QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
+        local veh = NetToVeh(netId)
         SetVehicleNumberPlateText(veh, "TOWR"..tostring(math.random(1000, 9999)))
         SetEntityHeading(veh, coords.w)
         exports['LegacyFuel']:SetFuel(veh, 100.0)
@@ -240,7 +241,7 @@ RegisterNetEvent('qb-tow:client:SpawnVehicle', function()
         for i = 1, 9, 1 do
             SetVehicleExtra(veh, i, 0)
         end
-    end, coords, true)
+    end, vehicleInfo, coords, false)
 end)
 
 RegisterNetEvent('QBCore:Client:OnPlayerLoaded', function()
@@ -307,7 +308,6 @@ RegisterNetEvent('qb-tow:client:TowVehicle', function()
             end
             if not IsPedInAnyVehicle(PlayerPedId()) then
                 if vehicle ~= targetVehicle then
-                    NetworkRequestControlOfEntity(targetVehicle)
                     local towPos = GetEntityCoords(vehicle)
                     local targetPos = GetEntityCoords(targetVehicle)
                     if #(towPos - targetPos) < 11.0 then
@@ -424,10 +424,11 @@ end)
 
 RegisterNetEvent('qb-tow:client:SpawnNPCVehicle', function()
     if not VehicleSpawned then
-        QBCore.Functions.SpawnVehicle(CurrentLocation.model, function(veh)
+        QBCore.Functions.TriggerCallback('QBCore:Server:SpawnVehicle', function(netId)
+            local veh = NetToVeh(netId)
             exports['LegacyFuel']:SetFuel(veh, 0.0)
             VehicleSpawned = true
-        end, CurrentLocation, true)
+        end, CurrentLocation.model, CurrentLocation, false)
     end
 end)
 
